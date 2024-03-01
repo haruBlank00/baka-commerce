@@ -4,25 +4,32 @@ import {
   LoaderFunctionArgs,
   redirect,
 } from "@remix-run/node";
-import { Outlet, useActionData, useLoaderData } from "@remix-run/react";
+import {
+  Outlet,
+  useActionData,
+  useLoaderData,
+  useNavigate,
+} from "@remix-run/react";
 import { Globe, MoonStarIcon } from "lucide-react";
 import { useState } from "react";
 import invariant from "tiny-invariant";
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { toast } from "~/components/ui/use-toast";
 import { prisma } from "~/services/db.server";
-import { getSession } from "~/services/session.server";
 
+import { ownerAuthenticator } from "~/services/auth.server";
+import { CreateStoreModal } from "./components/create-store-modal";
 import { MainNav } from "./components/main-nav";
 import { StoreInfo } from "./components/store-info";
 import { StoreListModal } from "./components/store-list-modal";
-import { CreateStoreModal } from "./components/create-store-modal";
 
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const storeId = params.storeId;
+  const user = await ownerAuthenticator.isAuthenticated(request, {
+    failureRedirect: "/dashboard-login",
+  });
+  const userId = user.id;
   if (storeId === "store") {
-    const session = await getSession(request);
-    const userId = session.data.userId;
     try {
       const store = await prisma.store.findFirst({
         where: {
@@ -32,23 +39,46 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
         },
       });
       if (!store) {
-        return { promptCreateStore: true, store: null };
+        return { promptCreateStore: true } as const;
       }
-      const url = `${store?.id}/dashboard`;
+      const url = `/${store?.id}/dashboard`;
       return redirect(url);
     } catch (e) {
-      console.log({ e });
-      return null;
+      console.log("dashboard loader storeId === store, error", e);
+      return { promptCreateStore: true } as const;
     }
   }
 
-  return { promptCreateStore: false, store: null };
+  try {
+    const stores = await prisma.store.findMany({
+      where: {
+        owner: {
+          id: userId,
+        },
+      },
+    });
+
+    const store = await prisma.store.findFirst({
+      where: {
+        id: storeId,
+      },
+    });
+
+    if (!store) {
+      return redirect("/store/dashboard");
+    }
+    return { promptCreateStore: false, stores, store } as const;
+  } catch (error) {
+    return { promptCreateStore: true } as const;
+  }
 };
 
 export default function DashboardLayout() {
   const loaderData = useLoaderData<typeof loader>();
   const [showStoreList, setShowStoreList] = useState(false);
-  const [showStoreForm, setShowStoreForm] = useState(false);
+  const [showStoreForm, setShowStoreForm] = useState(
+    loaderData.promptCreateStore
+  );
   const actionData = useActionData<typeof action>();
 
   if (actionData?.success) {
@@ -61,7 +91,7 @@ export default function DashboardLayout() {
   if (loaderData?.promptCreateStore) {
     return (
       <CreateStoreModal
-        showStoreForm={loaderData?.promptCreateStore || showStoreForm}
+        showStoreForm={loaderData?.promptCreateStore}
         setShowStoreForm={setShowStoreForm}
       />
     );
@@ -69,6 +99,10 @@ export default function DashboardLayout() {
 
   return (
     <>
+      <CreateStoreModal
+        showStoreForm={showStoreForm}
+        setShowStoreForm={setShowStoreForm}
+      />
       <StoreListModal
         onClick={() => {
           setShowStoreForm(true);
@@ -76,20 +110,25 @@ export default function DashboardLayout() {
         }}
         showStoreList={showStoreList}
         setShowStoreList={setShowStoreList}
+        stores={loaderData.stores}
       />
 
       <div className="min-h-screen h-screen">
         <div className="h-full items-stretch flex">
           <nav className="h-full basis-48  border-r">
-            <StoreInfo onClick={() => setShowStoreList(true)} />
+            <StoreInfo
+              imageSrc=""
+              name={loaderData?.store?.name || ""}
+              onClick={() => setShowStoreList(true)}
+            />
 
             <MainNav />
           </nav>
 
           <div className="flex-1">
             <header className="flex justify-between p-4 border">
-              <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500">
-                BakaHouse
+              <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500 capitalize">
+                {loaderData?.store?.name}
               </h1>
               <ul className="flex items-center gap-4">
                 <li className="text-purple-500">
@@ -125,8 +164,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const name = form.get("name")?.toString();
       invariant(name, "Name is required");
       try {
-        const session = await getSession(request);
-        const userId = session.data.userId;
+        const user = await ownerAuthenticator.isAuthenticated(request, {
+          failureRedirect: "/dashboard-login",
+        });
+        const userId = user.id;
 
         const store = await prisma.store.create({
           data: {
@@ -136,16 +177,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         });
         const message = `New store, ${store.name} has been created successfully.`;
         const title = "Store created successfully.";
-        return { store, success: true, message, title };
+        return redirect(`/${store.id}/dashboard`);
+        // return { store, success: true, message, title };
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           return {
+            store: null,
             success: false,
             message: error.message,
             title: "Could not create new store.",
           };
         }
         return {
+          store: null,
           success: false,
           message: "Some error occured",
           title: "Some error occured",

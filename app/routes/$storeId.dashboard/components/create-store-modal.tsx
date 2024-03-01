@@ -8,8 +8,8 @@ import { FormBuilder, InputField } from "~/components/ui/form-buildler";
 import { Modal } from "~/components/ui/modal";
 
 const storeSchema = z.object({
-  name: z.string({
-    required_error: "Please enter your store name.",
+  name: z.string().min(1, {
+    message: "Please enter your store name",
   }),
 });
 type TStoreSchema = z.infer<typeof storeSchema>;

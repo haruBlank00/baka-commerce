@@ -2,22 +2,25 @@ import { Modal } from "~/components/ui/modal";
 import { StoreInfo } from "./store-info";
 import { Form, useNavigate } from "@remix-run/react";
 import { Button } from "~/components/ui/button";
+import { Store } from "@prisma/client";
 
 type StoreListModalProps = {
   showStoreList: boolean;
   setShowStoreList: React.Dispatch<React.SetStateAction<boolean>>;
   onClick: () => void;
+  stores: Store[];
 };
 
 export const StoreListModal = ({
   showStoreList,
   setShowStoreList,
   onClick: onBtnClick,
+  stores,
 }: StoreListModalProps) => {
   const navigate = useNavigate();
 
   const onClick = (storeId: string) => {
-    navigate(`${storeId}/dashboard`);
+    navigate(`/${storeId}/dashboard`);
   };
 
   return (
@@ -34,7 +37,14 @@ export const StoreListModal = ({
         );
       }}
     >
-      <StoreInfo onClick={() => onClick("id")} />
+      {stores.map((store) => (
+        <StoreInfo
+          key={store?.id}
+          onClick={() => onClick(store?.id)}
+          name={store?.name}
+          imageSrc=""
+        />
+      ))}
     </Modal>
   );
 };

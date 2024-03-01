@@ -67,7 +67,7 @@ model Owner {
   firstName String
   lastName  String
 
-  store Store?
+  store Store[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -79,7 +79,7 @@ model Store {
   name String
 
   owner   Owner  @relation(fields: [ownerId], references: [id])
-  ownerId String @unique
+  ownerId String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
