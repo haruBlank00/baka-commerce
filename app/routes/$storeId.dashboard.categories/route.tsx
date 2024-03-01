@@ -4,7 +4,7 @@ import {
   json,
   unstable_composeUploadHandlers,
   unstable_createMemoryUploadHandler,
-  unstable_parseMultipartFormData
+  unstable_parseMultipartFormData,
 } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { useState } from "react";
@@ -22,11 +22,24 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
       where: {
         storeId,
       },
+      select: {
+        _count: {
+          select: {
+            product: true,
+          },
+        },
+        name: true,
+        image: true,
+        createdAt: true,
+        product: true,
+      },
     });
+
+    console.log("categories", categories);
     return json({ categories });
   } catch (e) {
     console.log("Error on storeId category laoder", e);
-    return json({ categories: null });
+    return json({ categories: [] });
   }
 };
 
