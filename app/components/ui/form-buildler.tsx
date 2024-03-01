@@ -24,35 +24,33 @@ export function FormBuilder<T extends FieldValues>({
   form,
 }: FormBuilderProps<T>) {
   return (
-    <div className="grid grid-cols-12">
+    <>
       {inputFields.map((inputField) => {
         const { label, formDescription, span = 12, name, ...rest } = inputField;
 
-        const colSpan = `col-span-${span}`;
+        const colSpan = `col-span-${span}`.toString();
         return (
-          <div key={inputField.name} className={colSpan}>
-            <FormField
-              control={form.control}
-              name={name}
-              render={({ field }) => {
-                const colSpan = `col-span-${span}`;
-                return (
-                  <FormItem className={colSpan}>
-                    <FormLabel>{label}</FormLabel>
-                    <FormControl>
-                      <Input {...field} {...rest} />
-                    </FormControl>
-                    {formDescription && (
-                      <FormDescription>{formDescription}</FormDescription>
-                    )}
-                    <FormMessage />
-                  </FormItem>
-                );
-              }}
-            />
-          </div>
+          <FormField
+            key={name}
+            control={form.control}
+            name={name}
+            render={({ field }) => {
+              return (
+                <FormItem className={colSpan}>
+                  <FormLabel>{label}</FormLabel>
+                  <FormControl>
+                    <Input {...field} {...rest} />
+                  </FormControl>
+                  {formDescription && (
+                    <FormDescription>{formDescription}</FormDescription>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
+          />
         );
       })}
-    </div>
+    </>
   );
 }

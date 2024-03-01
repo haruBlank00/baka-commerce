@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form } from "@remix-run/react";
+import { ActionFunctionArgs, json } from "@remix-run/node";
+import { Form, useActionData, useSubmit } from "@remix-run/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
@@ -13,10 +14,13 @@ import {
 } from "~/components/ui/card";
 import { ShadForm } from "~/components/ui/form";
 import { FormBuilder, InputField } from "~/components/ui/form-buildler";
-
+import { getFormValues } from "~/lib/getFormFields";
+import { fromZodError, fromZodIssue } from "zod-validation-error";
+import { useEffect } from "react";
+import invariant from "tiny-invariant";
 const loginSchema = z.object({
-  username: z.string().min(2, {
-    message: "Please enter your username",
+  email: z.string().min(2, {
+    message: "Please enter your email address",
   }),
   password: z.string().min(8, {
     message: "Please enter your password",
@@ -41,13 +45,23 @@ const loginFields: InputField[] = [
 type TLoginSchema = z.infer<typeof loginSchema>;
 
 export default function SignupPage() {
+  const actionData = useActionData<typeof action>();
+  const submit = useSubmit();
+  console.log({ actionData });
+
   const form = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      username: "",
+      email: "",
       password: "",
     },
   });
+
+  const handleSubmit = (data: TLoginSchema) => {
+    console.log({ data });
+    submit(data, { method: "POST" });
+  };
+
   return (
     <div className="h-screen w-screen grid place-items-center">
       <Card className="max-w-96">
@@ -58,18 +72,28 @@ export default function SignupPage() {
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="grid gap-4">
-          <ShadForm {...form}>
-            <Form>
+        <ShadForm {...form}>
+          <Form method="POST" onSubmit={form.handleSubmit(handleSubmit)}>
+            <CardContent className="grid grid-cols-1 gap-2">
               <FormBuilder form={form} inputFields={loginFields} />
-            </Form>
-          </ShadForm>
-        </CardContent>
+            </CardContent>
 
-        <CardFooter>
-          <Button className="w-full">Create account</Button>
-        </CardFooter>
+            <CardFooter>
+              <Button className="w-full" type="submit">
+                Sign In
+              </Button>
+            </CardFooter>
+          </Form>
+        </ShadForm>
       </Card>
     </div>
   );
 }
+
+export const action = async ({ request }: ActionFunctionArgs) => {
+  const { email, password } = await getFormValues<TLoginSchema>(request);
+  invariant(email, "Email is required.");
+  invariant(password, "Password is required.");
+
+  return null;
+};
