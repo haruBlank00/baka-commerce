@@ -15,7 +15,7 @@ export const MainNav = ({ storeId }: { storeId: string }) => {
       icon: <Home className="w-4 h-4" />,
     },
     {
-      to: `${storeId}/dashboard/products`,
+      to: `/${storeId}/dashboard/products`,
       label: "Products",
       icon: <Home className="w-4 h-4" />,
     },

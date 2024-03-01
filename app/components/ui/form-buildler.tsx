@@ -8,11 +8,12 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input, InputProps } from "~/components/ui/input";
+import { ImagePreviewInput } from "~/components/ui/image-preview-input";
 
 export type InputField = {
   span?: number;
   formDescription?: string;
-  label?: string;
+  label: string;
   name: string;
 } & InputProps;
 
@@ -31,6 +32,11 @@ export function FormBuilder<T extends FieldValues>({
         const { label, formDescription, span = 12, name, ...rest } = inputField;
 
         const colSpan = `col-span-${span}`.toString();
+
+        if (inputField.type === "image") {
+          return <ImagePreviewInput key={name} form={form} {...inputField} />;
+        }
+
         return (
           <FormField
             key={name}

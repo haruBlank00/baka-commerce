@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ActionFunctionArgs } from "@remix-run/node";
+import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { Form, useSubmit } from "@remix-run/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -42,6 +42,12 @@ const loginFields: InputField[] = [
 
 type TLoginSchema = z.infer<typeof loginSchema>;
 const resolver = zodResolver(loginSchema);
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  return await ownerAuthenticator.isAuthenticated(request, {
+    successRedirect: "/store/dashboard",
+  });
+};
 export default function LoginPage() {
   const submit = useSubmit();
 
