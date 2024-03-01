@@ -1,4 +1,4 @@
-import { FieldValues, Form, Path, UseFormReturn } from "react-hook-form";
+import { FieldValues, Path, UseFormReturn } from "react-hook-form";
 import {
   FormControl,
   FormDescription,
@@ -13,7 +13,9 @@ export type InputField = {
   span?: number;
   formDescription?: string;
   label?: string;
+  name: string;
 } & InputProps;
+
 type FormBuilderProps<T extends FieldValues> = {
   inputFields: InputField[];
   form: UseFormReturn<T>;
@@ -33,7 +35,7 @@ export function FormBuilder<T extends FieldValues>({
           <FormField
             key={name}
             control={form.control}
-            name={name}
+            name={name as Path<T>}
             render={({ field }) => {
               return (
                 <FormItem className={colSpan}>

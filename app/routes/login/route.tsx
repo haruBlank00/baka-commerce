@@ -1,9 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ActionFunctionArgs } from "@remix-run/node";
-import { Form, useActionData, useSubmit } from "@remix-run/react";
-import { useEffect } from "react";
+import { Form, useSubmit } from "@remix-run/react";
 import { useForm } from "react-hook-form";
-import { getValidatedFormData } from "remix-hook-form";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
 import {
@@ -16,8 +14,6 @@ import {
 } from "~/components/ui/card";
 import { ShadForm } from "~/components/ui/form";
 import { FormBuilder, InputField } from "~/components/ui/form-buildler";
-import { getFormValues } from "~/lib/getFormFields";
-import { normalizeError } from "~/lib/normalizeErrors";
 import { authenticator } from "~/services/auth.server";
 
 const loginSchema = z.object({
