@@ -1,7 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ActionFunctionArgs, json } from "@remix-run/node";
+import { ActionFunctionArgs } from "@remix-run/node";
 import { Form, useActionData, useSubmit } from "@remix-run/react";
 import { useForm } from "react-hook-form";
+import invariant from "tiny-invariant";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
 import {
@@ -15,9 +16,7 @@ import {
 import { ShadForm } from "~/components/ui/form";
 import { FormBuilder, InputField } from "~/components/ui/form-buildler";
 import { getFormValues } from "~/lib/getFormFields";
-import { fromZodError, fromZodIssue } from "zod-validation-error";
-import { useEffect } from "react";
-import invariant from "tiny-invariant";
+
 const loginSchema = z.object({
   email: z.string().min(2, {
     message: "Please enter your email address",
@@ -59,7 +58,7 @@ export default function SignupPage() {
 
   const handleSubmit = (data: TLoginSchema) => {
     console.log({ data });
-    submit(data, { method: "POST" });
+    submit(data, { method: "POST", encType: "application/json" });
   };
 
   return (

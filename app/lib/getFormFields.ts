@@ -1,7 +1,14 @@
-export async function getFormValues<T>(request: Request): Promise<T> {
-  const form = await request.formData();
+export async function getFormValues<T>(data: FormData | Request) {
+  let formData = null;
+
+  if (data instanceof Request) {
+    formData = await data.formData();
+  } else {
+    formData = data;
+  }
+
   const values: Record<string, unknown> = {};
-  for (const [name, value] of form.entries()) {
+  for (const [name, value] of formData.entries()) {
     values[name] = value;
   }
   return values as T;
