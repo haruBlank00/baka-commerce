@@ -83,6 +83,7 @@ model Store {
   ownerId String
 
   category Category[]
+  Product  Product[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -106,13 +107,37 @@ model Category {
 model Product {
   id String @id @default(uuid())
 
-  name String
+  name        String
+  description String
 
-  category   Category @relation(fields: [categoryId], references: [id])
-  categoryId String
+  sellingPrice Float
+  crossedPrice Float
+  costPerItem  Float
+
+  quantity Int
+  sku      Int
+
+  sellAfterOutOfStock Boolean
+  status              ProductStatus
+
+  images String[]
+
+  // variants = [{variant: "size", values: [{value: "xs", label: "small", price: "5.00"}]}]
+  variants Json
+
+  category Category[]
+
+  store   Store  @relation(fields: [storeId], references: [id])
+  storeId String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum ProductStatus {
+  PUBLISH
+  DRAFT
+  ARCHIVED
 }
 
 // id String @id @default(uuid())
