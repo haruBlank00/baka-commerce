@@ -122,7 +122,7 @@ export default function DashboardLayout() {
               onClick={() => setShowStoreList(true)}
             />
 
-            <MainNav />
+            <MainNav storeId={loaderData?.store?.id} />
           </nav>
 
           <div className="flex-1">

@@ -66,6 +66,7 @@ model Owner {
   password  String
   firstName String
   lastName  String
+  avatar    String
 
   store Store[]
 
@@ -81,6 +82,39 @@ model Store {
   owner   Owner  @relation(fields: [ownerId], references: [id])
   ownerId String
 
+  category Category[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Category {
+  id String @id @default(uuid())
+
+  name  String @unique
+  image String
+
+  store   Store  @relation(fields: [storeId], references: [id])
+  storeId String
+
+  product Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id String @id @default(uuid())
+
+  name String
+
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// id String @id @default(uuid())
+// createdAt DateTime @default(now())
+// updatedAt DateTime @updatedAt

@@ -2,25 +2,24 @@ import { NavLink } from "@remix-run/react";
 import { Home } from "lucide-react";
 import { cn } from "~/lib/utils";
 
-const MainLinks = [
-  {
-    to: "/dashboard",
-    label: "Home",
-    icon: <Home className="w-4 h-4" />,
-  },
-  {
-    to: "/dashboard/categories",
-    label: "Categories",
-    icon: <Home className="w-4 h-4" />,
-  },
-  {
-    to: "/dashboard/products",
-    label: "Products",
-    icon: <Home className="w-4 h-4" />,
-  },
-];
-
-export const MainNav = () => {
+export const MainNav = ({ storeId }: { storeId: string }) => {
+  const MainLinks = [
+    {
+      to: `/${storeId}/dashboard`,
+      label: `Home`,
+      icon: <Home className="w-4 h-4" />,
+    },
+    {
+      to: `/${storeId}/dashboard/categories`,
+      label: "Categories",
+      icon: <Home className="w-4 h-4" />,
+    },
+    {
+      to: `${storeId}/dashboard/products`,
+      label: "Products",
+      icon: <Home className="w-4 h-4" />,
+    },
+  ];
   return (
     <div className="mt-2 p-3">
       <p className="font-semibold text-gray-400 mb-2 text-sm">Main Links</p>
