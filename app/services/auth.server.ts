@@ -3,11 +3,10 @@ import { FormStrategy } from "remix-auth-form";
 import invariant from "tiny-invariant";
 import { getFormValues } from "~/lib/getFormFields";
 import { sessionStorage } from "~/services/session.server";
+import { login } from "./signin";
+import { User } from "@prisma/client";
 
-export const authenticator = new Authenticator<{
-  email: string;
-  password: string;
-}>(sessionStorage);
+export const authenticator = new Authenticator<User>(sessionStorage);
 
 const emailPasswordStragegy = new FormStrategy(async ({ form }) => {
   const { email, password } = await getFormValues<{
@@ -16,13 +15,10 @@ const emailPasswordStragegy = new FormStrategy(async ({ form }) => {
   }>(form);
   invariant(email, "Email is required.");
   invariant(password, "Password is required.");
-
-  // let user = await login(email, password);
-  return { email: "email", password: "password" };
+  console.log({ email, password });
+  const user = await login(email, password);
+  invariant(user, "User not found.");
+  return user;
 });
 
 authenticator.use(emailPasswordStragegy, "user-pass");
-
-const login = async (email: string, password: string) => {
-  // const user = await
-};

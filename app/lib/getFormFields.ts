@@ -1,5 +1,5 @@
-export async function getFormValues<T>(data: FormData | Request) {
-  let formData = null;
+export async function getFormValues<T>(data: FormData | Request): Promise<T> {
+  let formData: FormData;
 
   if (data instanceof Request) {
     formData = await data.formData();

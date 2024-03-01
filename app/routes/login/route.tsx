@@ -1,8 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ActionFunctionArgs } from "@remix-run/node";
 import { Form, useActionData, useSubmit } from "@remix-run/react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import invariant from "tiny-invariant";
+import { getValidatedFormData } from "remix-hook-form";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
 import {
@@ -16,6 +17,8 @@ import {
 import { ShadForm } from "~/components/ui/form";
 import { FormBuilder, InputField } from "~/components/ui/form-buildler";
 import { getFormValues } from "~/lib/getFormFields";
+import { normalizeError } from "~/lib/normalizeErrors";
+import { authenticator } from "~/services/auth.server";
 
 const loginSchema = z.object({
   email: z.string().min(2, {
@@ -42,14 +45,12 @@ const loginFields: InputField[] = [
 ];
 
 type TLoginSchema = z.infer<typeof loginSchema>;
-
-export default function SignupPage() {
-  const actionData = useActionData<typeof action>();
+const resolver = zodResolver(loginSchema);
+export default function LoginPage() {
   const submit = useSubmit();
-  console.log({ actionData });
 
   const form = useForm({
-    resolver: zodResolver(loginSchema),
+    resolver,
     defaultValues: {
       email: "",
       password: "",
@@ -57,8 +58,10 @@ export default function SignupPage() {
   });
 
   const handleSubmit = (data: TLoginSchema) => {
-    console.log({ data });
-    submit(data, { method: "POST", encType: "application/json" });
+    submit(data, {
+      method: "post",
+      action: "/login",
+    });
   };
 
   return (
@@ -90,9 +93,8 @@ export default function SignupPage() {
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { email, password } = await getFormValues<TLoginSchema>(request);
-  invariant(email, "Email is required.");
-  invariant(password, "Password is required.");
-
-  return null;
+  await authenticator.authenticate("user-pass", request, {
+    successRedirect: "/dashboard",
+    failureRedirect: "/login",
+  });
 };

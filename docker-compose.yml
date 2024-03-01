@@ -1,0 +1,25 @@
+version: "3.1"
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: baka_commerce_db
+    environment:
+      POSTGRES_DB: bakaDb
+      POSTGRES_USER: bakaUser
+      POSTGRES_PASSWORD: bakaPassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgres/data
+
+  adminer:
+    image: adminer:latest
+    container_name: baka_commerce_adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
