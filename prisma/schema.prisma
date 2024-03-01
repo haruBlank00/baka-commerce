@@ -62,6 +62,8 @@ model Address {
 model Owner {
   id String @id @default(uuid())
 
+  email     String
+  password  String
   firstName String
   lastName  String
 
