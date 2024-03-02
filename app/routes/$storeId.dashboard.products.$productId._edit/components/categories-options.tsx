@@ -1,6 +1,6 @@
 import { Category } from "@prisma/client";
 import { CheckCheck, Search, X } from "lucide-react";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
@@ -19,10 +19,20 @@ import { cn } from "~/lib/utils";
 
 export const CategoriesOptions = ({
   categories,
+  selectedCategories,
+  setSelectedCategories,
 }: {
   categories: Category[];
+  selectedCategories: { id: string; name: string }[];
+  setSelectedCategories: Dispatch<
+    SetStateAction<
+      {
+        id: string;
+        name: string;
+      }[]
+    >
+  >;
 }) => {
-  const [values, setValues] = useState<{ id: string; name: string }[]>([]);
   const [open, setOpen] = useState(false);
 
   return (
@@ -35,20 +45,22 @@ export const CategoriesOptions = ({
           className="w-full justify-between"
         >
           <div className="flex gap-2">
-            {values.length > 0
-              ? values.map((value) => (
+            {selectedCategories.length > 0
+              ? selectedCategories.map((selectedCategory) => (
                   <Badge
-                    key={value.id}
+                    key={selectedCategory.id}
                     variant={"secondary"}
                     className="capitalize"
                   >
-                    {value.name}
+                    {selectedCategory.name}
                     <X
                       className="ml-1 w-5 h-5 hover:bg-purple-300 hover:text-white rounded-full p-1"
                       size={32}
                       onClick={() =>
-                        setValues((prev) => {
-                          return prev.filter((item) => item.id !== value.id);
+                        setSelectedCategories((prev) => {
+                          return prev.filter(
+                            (item) => item.id !== selectedCategory.id
+                          );
                         })
                       }
                     />
@@ -72,21 +84,24 @@ export const CategoriesOptions = ({
                 key={category.id}
                 value={category.name}
                 onSelect={(currentValue) => {
-                  const alreadyExist = values.find(
-                    (value) => value.name === category.name
+                  const alreadyExist = selectedCategories.find(
+                    (selectedCategory) => selectedCategory.id === category.id
                   );
                   if (alreadyExist) {
-                    setValues(
-                      values.filter((value) => value.name !== category.name)
+                    setSelectedCategories(
+                      selectedCategories.filter(
+                        (selectedCategory) =>
+                          selectedCategory.id !== category.id
+                      )
                     );
                     return;
                   }
-                  setValues((prev) => {
+                  setSelectedCategories((prev) => {
                     return [
                       ...prev,
                       {
-                        id: currentValue,
-                        name: category.name,
+                        name: currentValue,
+                        id: category.id,
                       },
                     ];
                   });
@@ -96,7 +111,9 @@ export const CategoriesOptions = ({
                 <CheckCheck
                   className={cn(
                     "ml-auto h-4 w-4",
-                    values.find((value) => value.name === category.name)
+                    selectedCategories.find(
+                      (selectedCategory) => selectedCategory.id === category.id
+                    )
                       ? "opacity-100"
                       : "opacity-0"
                   )}

@@ -99,5 +99,4 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     },
   });
   return { category };
-  return null;
 };

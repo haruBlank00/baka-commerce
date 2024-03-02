@@ -98,7 +98,7 @@ model Category {
   store   Store  @relation(fields: [storeId], references: [id])
   storeId String
 
-  product Product[]
+  products ProductCategory[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -115,7 +115,7 @@ model Product {
   costPerItem  Float
 
   quantity Int
-  sku      Int
+  sku      String
 
   sellAfterOutOfStock Boolean
   status              ProductStatus
@@ -123,12 +123,25 @@ model Product {
   images String[]
 
   // variants = [{variant: "size", values: [{value: "xs", label: "small", price: "5.00"}]}]
-  variants Json
+  variants Json?
 
-  category Category[]
+  categories ProductCategory[]
 
-  store   Store  @relation(fields: [storeId], references: [id])
-  storeId String
+  store   Store?  @relation(fields: [storeId], references: [id])
+  storeId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProductCategory {
+  id String @id @default(uuid())
+
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

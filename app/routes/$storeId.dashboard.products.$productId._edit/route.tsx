@@ -1,81 +1,26 @@
-import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
-import { ImagePlus, MoveLeft } from "lucide-react";
+import {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  json,
+  unstable_composeUploadHandlers,
+  unstable_createMemoryUploadHandler,
+  unstable_parseMultipartFormData,
+} from "@remix-run/node";
+import { Form, useLoaderData, useSubmit } from "@remix-run/react";
+import { ImagePlus, MoveLeft, X } from "lucide-react";
+import { useRef, useState } from "react";
+import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { Checkbox } from "~/components/ui/checkbox";
 import { ClientOnly } from "~/components/ui/client-only";
-import { InputField } from "~/components/ui/form-buildler";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { TextEditor } from "~/components/ui/textEditor.client";
+import { getFormValues } from "~/lib/getFormFields";
 import { prisma } from "~/services/db.server";
 import { CategoriesOptions } from "./components/categories-options";
-import Quill from "~/components/ui/quill.client";
-import { Button } from "~/components/ui/button";
-import { getFormValues } from "~/lib/getFormFields";
-const productFields: InputField[][] = [
-  [
-    {
-      name: "name",
-      label: "Product Name",
-      placeholder: "eg: Pants",
-      required: true,
-    },
-    {
-      name: "description",
-      label: "Product Description",
-      placeholder:
-        "Elevate your style with our premium leather wallet. Sleek, functional, and timeless, this wallet features multiple card slots, a secure coin pocket, and a slim profile. Crafted for everyday use, it’s the perfect accessory for modern professionals.",
-      type: "editor",
-    },
-  ],
-  [
-    {
-      name: "Selling Price",
-      label: "Selling Price",
-      placeholder: "eg: 100",
-      required: true,
-      type: "number",
-    },
-    {
-      name: "Crossed Price",
-      label: "Selling Price",
-      placeholder: "eg: 100",
-      required: true,
-      type: "number",
-    },
-    {
-      name: "Cost per item",
-      description: "Customer won't see this data",
-      label: "Selling Price",
-      placeholder: "eg: 100",
-      required: true,
-      type: "number",
-    },
-  ],
-  [
-    {
-      name: "sellAfterOutOfStock",
-      label: "Continue selling even after product is out of stock",
-      type: "checkbox",
-    },
-  ],
-  [
-    {
-      name: "images",
-      label: "Product images",
-      required: true,
-      type: "image",
-    },
-  ],
-  [
-    {
-      name: "categories",
-      label: "Product categories",
-      required: true,
-      type: "category",
-    },
-  ],
-];
+import { uploadImage } from "~/services/cloudinary.server";
+import { ProductStatus } from "@prisma/client";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const storeId = params.storeId;
@@ -88,7 +33,42 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return json({ categories });
 };
 export default function CreateProduct() {
+  const imagesFieldRef = useRef<HTMLInputElement>(null);
   const loaderData = useLoaderData<typeof loader>();
+  const [images, setImages] = useState<File[]>([]);
+  const [textEditorValue, setTextEditorValue] = useState("");
+  const [seletedCategories, setSeletedCategories] = useState<
+    { id: string; name: string }[]
+  >([]);
+  const [productStatus, setProductStatus] = useState<ProductStatus>(
+    ProductStatus.DRAFT
+  );
+
+  const submit = useSubmit();
+
+  const removeProductImage = (name: string) => {
+    setImages((prevImages) =>
+      prevImages.filter((prevImage) => prevImage.name !== name)
+    );
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    const formData = new FormData(e.currentTarget);
+    formData.append("description", textEditorValue);
+    formData.append("categories", JSON.stringify(seletedCategories));
+    formData.append("status", productStatus);
+    for (const image of images) {
+      formData.append("images", image);
+    }
+
+    console.log(await getFormValues(formData));
+
+    submit(formData, {
+      method: "post",
+      encType: "multipart/form-data",
+    });
+  };
+
   return (
     <>
       <div className=" flex justify-between">
@@ -101,7 +81,7 @@ export default function CreateProduct() {
         </div>
       </div>
 
-      <Form className="grid grid-cols-2 gap-4" method="post">
+      <Form className="grid grid-cols-2 gap-4" onSubmit={handleSubmit}>
         <div>
           <Card className="rounded-sm p-3 flex flex-col gap-3 mb-4 h-72">
             <div className="flex flex-col gap-2">
@@ -116,7 +96,15 @@ export default function CreateProduct() {
                 Product Description <span className="text-red-500">*</span>
               </Label>
               <ClientOnly fallback={<div>loading...</div>}>
-                {() => <Quill defaultValue="Hello <b>Remix!</b>" />}
+                {() => (
+                  <TextEditor
+                    name={"description"}
+                    theme="snow"
+                    placeholder="Enter your product description"
+                    value={textEditorValue}
+                    onChange={setTextEditorValue}
+                  />
+                )}
               </ClientOnly>
             </div>
           </Card>
@@ -146,6 +134,20 @@ export default function CreateProduct() {
             </div>
           </Card>
 
+          <Card className="rounded-sm p-3 flex flex-col gap-3 mb-4">
+            <div className="flex flex-col gap-2">
+              <Label>Quantity</Label>
+              <Input name="quantity" placeholder="10" type="number" />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label>
+                <span>Product Sku</span>
+              </Label>
+              <Input name="sku" placeholder="eg: 100" />
+            </div>
+          </Card>
+
           <div className="flex items-center space-x-2 cursor-pointer">
             <Checkbox name="sellAfterOutOfStock" id="sellAfterOutOfStock" />
             <Label htmlFor="sellAfterOutOfStock">
@@ -157,23 +159,82 @@ export default function CreateProduct() {
         <div>
           <Card className="rounded-sm p-3 flex flex-col gap-3 mb-4">
             <Label>Product Images</Label>
-            <div className="border-2 border-dashed h-40 grid place-items-center bg-white hover:bg-slate-100">
-              <ImagePlus size={72} />
-            </div>
+            <Input
+              type="file"
+              id="productImage"
+              hidden={true}
+              // name="images"
+              ref={imagesFieldRef}
+              className="hidden"
+              multiple
+              accept="image/*"
+              onChange={(e) => {
+                const files = e?.target?.files;
+                if (files) {
+                  setImages((prevImages) => {
+                    return [...prevImages, ...files];
+                  });
+                }
+              }}
+            />
+            <Card
+              className={`border-2 border-dashed h-44 grid ${
+                images.length > 0 ? "" : "place-items-center"
+              } bg-white hover:bg-slate-100 rounded-sm shadow-none cursor-pointer p-2`}
+              onClick={() => imagesFieldRef.current?.click()}
+            >
+              {images?.length > 0 ? (
+                <figure className="grid grid-cols-4 gap-2">
+                  {images.map((image) => {
+                    const urlString = URL.createObjectURL(image);
+                    return (
+                      <div className="relative" key={image.name}>
+                        <X
+                          className="absolute right-1 top-1 p-1 rounded-full bg-slate-100 hover:bg-slate-200 "
+                          size={18}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeProductImage(image.name);
+                          }}
+                        />
+                        <img
+                          className="block w-full h-full object rounded-sm"
+                          src={urlString}
+                          alt="Product showcase"
+                        />
+                      </div>
+                    );
+                  })}
+                </figure>
+              ) : (
+                <ImagePlus size={72} />
+              )}
+            </Card>
           </Card>
 
           <Card className="rounded-sm p-3 flex flex-col gap-3 mb-4">
             <div className="flex flex-col gap-2">
               <Label>Categories</Label>
-              <CategoriesOptions categories={loaderData.categories} />
+              <CategoriesOptions
+                categories={loaderData.categories}
+                selectedCategories={seletedCategories}
+                setSelectedCategories={setSeletedCategories}
+              />
             </div>
 
             <div className="flex flex-col gap-2"></div>
           </Card>
 
           <div className="flex gap-2">
-            <Button type="submit">Publish</Button>
-            <Button variant={"outline"}>Save as draft</Button>
+            <Button
+              type="submit"
+              onClick={() => setProductStatus(ProductStatus.PUBLISH)}
+            >
+              Publish
+            </Button>
+            <Button onClick={() => setProductStatus(ProductStatus.DRAFT)}>
+              Save as draft
+            </Button>
           </div>
         </div>
       </Form>
@@ -181,10 +242,53 @@ export default function CreateProduct() {
   );
 }
 
-export const action = async ({ request }: ActionFunctionArgs) => {
-  const formData = await request.formData();
+export const action = async ({ request, params }: ActionFunctionArgs) => {
+  const storeId = params.storeId;
 
-  const formValues = getFormValues(formData);
-  console.log({ formValues });
+  const uploadHandler = unstable_composeUploadHandlers(
+    async ({ contentType, data, name, filename }) => {
+      if (name !== "images") {
+        return undefined;
+      }
+      console.log({ name, data }, "name i shere");
+      // return name;
+      const uploadedImage = await uploadImage(data);
+      console.log(uploadedImage.secure_url);
+      return uploadedImage.secure_url;
+    },
+    unstable_createMemoryUploadHandler()
+  );
+  const formData = await unstable_parseMultipartFormData(
+    request,
+    uploadHandler
+  );
+
+  const formValues: Record<string, string> = await getFormValues(formData);
+  const images = formData.getAll("images") as string[];
+  const categories = JSON.parse(formValues?.categories ?? "[]");
+  const sellingPrice = Number.parseFloat(formValues.sellingPrice);
+  const crossedPrice = Number.parseFloat(formValues.crossedPrice);
+  const costPerItem = Number.parseFloat(formValues.costPerItem);
+  const quantity = Number.parseInt(formValues.quantity);
+
+  const product = await prisma.product.create({
+    data: {
+      ...formValues,
+      sellAfterOutOfStock: false,
+      images,
+      sellingPrice,
+      crossedPrice,
+      costPerItem,
+      quantity,
+      storeId,
+      
+      categories: {
+        create: categories.map((category) => ({
+          category: { connect: { id: category.id } },
+        })),
+      },
+    },
+  });
+  console.log({ product });
   return null;
 };

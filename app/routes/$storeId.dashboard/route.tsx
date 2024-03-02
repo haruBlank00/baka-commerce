@@ -113,7 +113,7 @@ export default function DashboardLayout() {
         stores={loaderData.stores}
       />
 
-      <div className="min-h-screen h-screen">
+      <div className="min-h-screen">
         <div className="h-full items-stretch flex">
           <nav className="h-full basis-48  border-r">
             <StoreInfo
@@ -145,7 +145,7 @@ export default function DashboardLayout() {
               </ul>
             </header>
 
-            <main className="p-4 bg-slate-100 h-full">
+            <main className="p-4 bg-slate-100">
               <Outlet />
             </main>
           </div>
