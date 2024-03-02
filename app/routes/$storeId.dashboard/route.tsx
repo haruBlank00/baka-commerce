@@ -113,42 +113,40 @@ export default function DashboardLayout() {
         stores={loaderData.stores}
       />
 
-      <div className="min-h-screen">
-        <div className="h-full items-stretch flex">
-          <nav className="h-full basis-48  border-r">
-            <StoreInfo
-              imageSrc=""
-              name={loaderData?.store?.name || ""}
-              onClick={() => setShowStoreList(true)}
-            />
+      <div className="min-h-screen items-stretch flex">
+        <nav className="h-full basis-48 border-r">
+          <StoreInfo
+            imageSrc=""
+            name={loaderData?.store?.name || ""}
+            onClick={() => setShowStoreList(true)}
+          />
 
-            <MainNav storeId={loaderData?.store?.id} />
-          </nav>
+          <MainNav storeId={loaderData?.store?.id} />
+        </nav>
 
-          <div className="flex-1">
-            <header className="flex justify-between p-4 border">
-              <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500 capitalize">
-                {loaderData?.store?.name}
-              </h1>
-              <ul className="flex items-center gap-4">
-                <li className="text-purple-500">
-                  <MoonStarIcon className="" />
-                </li>
-                <li className="text-purple-500">
-                  <Globe />
-                </li>
-                <li className="text-purple-500">
-                  <Avatar>
-                    <AvatarFallback>BH</AvatarFallback>
-                  </Avatar>
-                </li>
-              </ul>
-            </header>
+        <div className="flex-1 flex flex-col">
+          <header className="flex justify-between p-4 border">
+            <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500 capitalize">
+              {loaderData?.store?.name}
+            </h1>
+            <ul className="flex items-center gap-4">
+              <li className="text-purple-500">
+                <MoonStarIcon className="" />
+              </li>
+              <li className="text-purple-500">
+                <Globe />
+              </li>
+              <li className="text-purple-500">
+                <Avatar>
+                  <AvatarFallback>BH</AvatarFallback>
+                </Avatar>
+              </li>
+            </ul>
+          </header>
 
-            <main className="p-4 bg-slate-100">
-              <Outlet />
-            </main>
-          </div>
+          <main className="flex-1 p-4 bg-slate-100">
+            <Outlet />
+          </main>
         </div>
       </div>
     </>

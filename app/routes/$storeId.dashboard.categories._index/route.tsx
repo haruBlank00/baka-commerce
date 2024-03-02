@@ -6,7 +6,7 @@ import {
   unstable_createMemoryUploadHandler,
   unstable_parseMultipartFormData,
 } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useSearchParams } from "@remix-run/react";
 import { useState } from "react";
 import invariant from "tiny-invariant";
 import { Button } from "~/components/ui/button";
@@ -15,6 +15,7 @@ import { uploadImage } from "~/services/cloudinary.server";
 import { prisma } from "~/services/db.server";
 import { categoryColumns } from "./components/columns";
 import { CreateCategoryModal } from "./components/create-category-modal";
+import { EditCategorySheet } from "./components/edit-sheet";
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const storeId = params.storeId;
   try {
@@ -25,17 +26,16 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
       select: {
         _count: {
           select: {
-            product: true,
+            products: true,
           },
         },
         name: true,
         image: true,
         createdAt: true,
-        product: true,
+        id: true,
       },
     });
 
-    console.log("categories", categories);
     return json({ categories });
   } catch (e) {
     console.log("Error on storeId category laoder", e);
@@ -46,13 +46,23 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 export default function Category() {
   const loaderData = useLoaderData<typeof loader>();
   const [showCreateCategoryModal, setShowCreateCategoryModal] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  const showEditSheet = searchParams.get("edit");
+  const categoryId = searchParams.get("categoryId");
+  const categoryToEdit =
+    categoryId &&
+    loaderData.categories.find((category) => category.id === categoryId);
   return (
     <>
-      <CreateCategoryModal
-        showCreateCategoryModal={showCreateCategoryModal}
-        setShowCreateCategoryModal={setShowCreateCategoryModal}
-      />
-      <div>
+      {showEditSheet && (
+        <EditCategorySheet showSheet={true} category={categoryToEdit} />
+      )}
+      <div className="">
+        <CreateCategoryModal
+          showCreateCategoryModal={showCreateCategoryModal}
+          setShowCreateCategoryModal={setShowCreateCategoryModal}
+        />
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">Store Categories</h2>
           <Button

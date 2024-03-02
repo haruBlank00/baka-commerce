@@ -1,6 +1,7 @@
 import { Category } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import { formatDate } from "~/lib/formatDate";
+import { CellActions } from "./cell-actions";
 
 export const categoryColumns: ColumnDef<Category>[] = [
   {
@@ -33,6 +34,15 @@ export const categoryColumns: ColumnDef<Category>[] = [
     },
   },
   {
+    accessorKey: "__count",
+    header: "No. of Products",
+    cell: ({ row }) => {
+      return (
+        <p className="font-bold text-lg">{row.original?._count?.products}</p>
+      );
+    },
+  },
+  {
     accessorKey: "createdAt",
     header: "Created At",
     cell: ({ row }) => {
@@ -40,10 +50,9 @@ export const categoryColumns: ColumnDef<Category>[] = [
     },
   },
   {
-    accessorKey: "__count",
-    header: "Products",
+    id: "cell-actions",
     cell: ({ row }) => {
-      return <span>{row.original.__count}</span>;
+      return <CellActions data={row.original} />;
     },
   },
 ];
