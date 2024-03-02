@@ -9,10 +9,11 @@ import {
 } from "~/components/ui/form";
 import { Input, InputProps } from "~/components/ui/input";
 import { ImagePreviewInput } from "~/components/ui/image-preview-input";
+import { Checkbox } from "./checkbox";
 
 export type InputField = {
   span?: number;
-  formDescription?: string;
+  description?: string;
   label: string;
   name: string;
 } & InputProps;
@@ -29,12 +30,37 @@ export function FormBuilder<T extends FieldValues>({
   return (
     <>
       {inputFields.map((inputField) => {
-        const { label, formDescription, span = 12, name, ...rest } = inputField;
+        const { label, description, span = 12, name, ...rest } = inputField;
 
         const colSpan = `col-span-${span}`.toString();
 
         if (inputField.type === "image") {
           return <ImagePreviewInput key={name} form={form} {...inputField} />;
+        }
+
+        if (inputField.type === "checkbox") {
+          return (
+            <FormField
+              key={name}
+              control={form.control}
+              name={name}
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow">
+                  <FormControl>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                      <FormLabel>
+                        Use different settings for my mobile devices
+                      </FormLabel>
+                    </div>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          );
         }
 
         return (
@@ -49,8 +75,8 @@ export function FormBuilder<T extends FieldValues>({
                   <FormControl>
                     <Input {...field} {...rest} />
                   </FormControl>
-                  {formDescription && (
-                    <FormDescription>{formDescription}</FormDescription>
+                  {description && (
+                    <FormDescription>{description}</FormDescription>
                   )}
                   <FormMessage />
                 </FormItem>

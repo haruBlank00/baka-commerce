@@ -10,8 +10,12 @@ import {
 } from "@remix-run/react";
 import tailwind from "~/tailwind.css";
 import { Toaster } from "~/components/ui/toaster";
+import quillCss from "quill/dist/quill.snow.css";
+
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: tailwind },
+  { rel: "stylesheet", href: quillCss },
+
   ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
 ];
 
