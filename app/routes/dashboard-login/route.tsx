@@ -93,7 +93,7 @@ export default function LoginPage() {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   await ownerAuthenticator.authenticate("owner-auth", request, {
-    successRedirect: "store/dashboard",
+    successRedirect: "/store/dashboard",
     failureRedirect: "/dashboard-login",
   });
 };

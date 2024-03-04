@@ -17,6 +17,7 @@ type CellActionsProps = {
 };
 export const CellActions = ({ data }: CellActionsProps) => {
   const navigate = useNavigate();
+  const fetcher = useFetcher();
   return (
     <>
       <DropdownMenu>
@@ -36,12 +37,26 @@ export const CellActions = ({ data }: CellActionsProps) => {
             <span>View</span>
           </DropdownMenuItem>
 
-          <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+          <DropdownMenuItem
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => navigate(`?edit=true&categoryId=${data.id}`)}
+          >
             <Pen className="w-4 h-4 text-green-500" />
             <span>Edit</span>
           </DropdownMenuItem>
 
-          <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+          <DropdownMenuItem
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() =>
+              fetcher.submit(
+                { categoryId: data.id },
+                {
+                  method: "DELETE",
+                  action: "destroy",
+                }
+              )
+            }
+          >
             <Trash className="w-4 h-4 text-red-500" />
             <span>Delete</span>
           </DropdownMenuItem>

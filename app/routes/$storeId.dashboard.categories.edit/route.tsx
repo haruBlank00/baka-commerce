@@ -7,11 +7,6 @@ import {
 import { uploadImage } from "~/services/cloudinary.server";
 import { prisma } from "~/services/db.server";
 
-export const loader = () => {
-  console.log("edit loder");
-  return { lol: "lolll" };
-};
-
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   console.log("edit category here");
   const storeId = params.storeId;

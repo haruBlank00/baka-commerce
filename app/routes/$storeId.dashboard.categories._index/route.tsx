@@ -22,6 +22,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
     const categories = await prisma.category.findMany({
       where: {
         storeId,
+        removed: null,
       },
       select: {
         _count: {

@@ -1,5 +1,6 @@
-import { FieldValue, FieldValues, Path, UseFormReturn } from "react-hook-form";
-import { Card } from "~/components/ui/card";
+import { useState } from "react";
+import { FieldValues, Path, UseFormReturn } from "react-hook-form";
+import { InputField } from "~/components/ui/form-buildler";
 import { Input } from "~/components/ui/input";
 import {
   FormControl,
@@ -9,8 +10,6 @@ import {
   FormLabel,
   FormMessage,
 } from "./form";
-import { InputField } from "~/components/ui/form-buildler";
-import { useState } from "react";
 
 type ImagePreviewInputProps = {
   form: UseFormReturn<T>;
@@ -18,7 +17,7 @@ type ImagePreviewInputProps = {
 export function ImagePreviewInput<T extends FieldValues>({
   form,
   label,
-  formDescription,
+  description,
   name,
   span,
   ...rest
@@ -49,9 +48,7 @@ export function ImagePreviewInput<T extends FieldValues>({
                   }}
                 />
               </FormControl>
-              {formDescription && (
-                <FormDescription>{formDescription}</FormDescription>
-              )}
+              {description && <FormDescription>{description}</FormDescription>}
 
               {field.value && (
                 <figure className="w-56 h-56 mx-auto">
