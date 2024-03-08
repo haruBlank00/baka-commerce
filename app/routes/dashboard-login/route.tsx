@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
 import { Form, useSubmit } from "@remix-run/react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -14,7 +14,9 @@ import {
 } from "~/components/ui/card";
 import { ShadForm } from "~/components/ui/form";
 import { FormBuilder, InputField } from "~/components/ui/form-buildler";
-import { authenticator, ownerAuthenticator } from "~/services/auth.server";
+import { getFormValues } from "~/lib/getFormFields";
+import { normalizeError } from "~/lib/normalizeErrors";
+import { ownerAuthenticator } from "~/services/auth.server";
 
 const loginSchema = z.object({
   email: z.string().min(2, {
@@ -31,12 +33,14 @@ const loginFields: InputField[] = [
     placeholder: "johndoe@baka.com",
     label: "Email",
     type: "email",
+    required: true,
   },
   {
     name: "password",
     placeholder: "********",
     label: "Password",
     type: "password",
+    required: true,
   },
 ];
 
@@ -92,8 +96,25 @@ export default function LoginPage() {
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
+  const requestClone = request.clone();
+  const formValues = await getFormValues<TLoginSchema>(
+    await requestClone.formData()
+  );
+  const parsedData = await loginSchema.safeParseAsync({
+    email: "",
+    password: "",
+  });
+
+  // if (!parsedData.success) {
+  //   const errors = parsedData.error;
+  //   return json(errors, {
+  //     status: 401,
+  //   });
+  // }
+
   await ownerAuthenticator.authenticate("owner-auth", request, {
-    successRedirect: "/store/dashboard",
+    // let's add `loginSuccess` search params, and read it to show login success toast :)
+    successRedirect: "/store/dashboard?loginSuccess=true",
     failureRedirect: "/dashboard-login",
   });
 };

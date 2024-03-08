@@ -1,5 +1,6 @@
 import { FieldErrors, FieldValues } from "react-hook-form";
 import invariant from "tiny-invariant";
+import { ZodError } from "zod";
 
 /**
  * Normalizes a set of form validation errors into an array of objects with a standardized structure.
@@ -26,7 +27,9 @@ import invariant from "tiny-invariant";
  * //   { name: "password", message: "Password must be at least 8 characters long" }
  * // ]
  */
-export const normalizeError = <T>(errors: FieldErrors<FieldValues>) => {
+export const normalizeError = <T>(
+  errors: FieldErrors<FieldValues> | ZodError<T>
+) => {
   const normalizedErrors: Record<string, keyof T | string>[] = [];
   for (const error of Object.entries(errors)) {
     const [key, value] = error;

@@ -15,7 +15,6 @@ export type InputField = {
   span?: number;
   description?: string;
   label: string;
-  name: string;
 } & InputProps;
 
 type FormBuilderProps<T extends FieldValues> = {
@@ -71,7 +70,12 @@ export function FormBuilder<T extends FieldValues>({
             render={({ field }) => {
               return (
                 <FormItem className={colSpan}>
-                  <FormLabel>{label}</FormLabel>
+                  <FormLabel>
+                    {label}{" "}
+                    {inputField.required && (
+                      <span className="text-red-500">*</span>
+                    )}
+                  </FormLabel>
                   <FormControl>
                     <Input {...field} {...rest} />
                   </FormControl>
