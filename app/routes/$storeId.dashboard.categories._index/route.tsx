@@ -6,8 +6,12 @@ import {
   unstable_createMemoryUploadHandler,
   unstable_parseMultipartFormData,
 } from "@remix-run/node";
-import { useLoaderData, useSearchParams } from "@remix-run/react";
-import { useState } from "react";
+import {
+  useActionData,
+  useLoaderData,
+  useSearchParams,
+} from "@remix-run/react";
+import { useEffect, useState } from "react";
 import invariant from "tiny-invariant";
 import { Button } from "~/components/ui/button";
 import { DataTable } from "~/components/ui/data-table";
@@ -46,14 +50,20 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 export default function Category() {
   const loaderData = useLoaderData<typeof loader>();
+  const actionData = useActionData<typeof action>();
   const [showCreateCategoryModal, setShowCreateCategoryModal] = useState(false);
   const [searchParams] = useSearchParams();
 
-  const showEditSheet = searchParams.get("edit");
-  const categoryId = searchParams.get("categoryId");
+  const showEditSheet = searchParams.get("edit") as string;
+  const categoryId = searchParams.get("categoryId") as string;
   const categoryToEdit =
     categoryId &&
-    loaderData.categories.find((category) => category.id === categoryId);
+    loaderData.categories.find((category) => category.id === categoryId)!;
+  useEffect(() => {
+    if (actionData?.success) {
+      setShowCreateCategoryModal(false);
+    }
+  }, [actionData]);
   return (
     <>
       {showEditSheet && (
@@ -82,7 +92,7 @@ export default function Category() {
 }
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-  const storeId = params.storeId;
+  const storeId = params.storeId as string;
   const uploadHandler = unstable_composeUploadHandlers(
     async ({ contentType, data, name, filename }) => {
       if (name !== "image") {
@@ -102,6 +112,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const name = formData.get("name")?.toString();
   invariant(name, "Category name is required");
   invariant(image, "Category image is required");
+
   const category = await prisma.category.create({
     data: {
       image,
@@ -109,5 +120,5 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       storeId,
     },
   });
-  return { category };
+  return { category, success: true };
 };

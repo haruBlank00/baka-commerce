@@ -4,7 +4,7 @@ import { FilePenIcon } from "lucide-react";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { Button } from "~/components/ui/button";
 import {
   Sheet,
@@ -32,23 +32,28 @@ export const EditCategorySheet = ({
   };
 
   const submitHandler = (e: React.FormEvent<HTMLFormElement>) => {
-    console.log(e.currentTarget);
+    console.log("call me?");
     const formData = new FormData(e.currentTarget);
+    console.log({ file });
 
-    console.log(formData.get("name"), formData.get("image"));
-    if (file) {
-      formData.append("image", file);
-    } else {
+    if (!file) {
       formData.delete("image");
     }
 
-    console.log(formData.entries());
+    console.log(
+      formData.get("name"),
+      formData.get("id"),
+      formData.get("image")
+    );
+
     submit(formData, {
-      method: "post",
       action: `/${params.storeId}/dashboard/categories/edit`,
+      method: "post",
       encType: "multipart/form-data",
     });
   };
+
+  const categoryId = searchParams.get("categoryId");
 
   return (
     <Sheet open={showSheet} onOpenChange={onCloseSheet}>
@@ -61,11 +66,12 @@ export const EditCategorySheet = ({
 
         <Form
           className="flex flex-col gap-4 bg-white shadow-sm p-2"
-          onSubmit={submitHandler}
-          method="post"
-          encType="multipart/form-data"
-          action={`/${params.storeId}/dashboard/categories/edit`}
+          onSubmit={(e) => submitHandler(e)}
+          // method="post"
+          // encType="multipart/form-data"
+          navigate={false}
         >
+          <Input value={categoryId || ""} readOnly name="id" hidden />
           <div className="flex flex-col gap-2">
             <Label>
               Category Name <span className="text-red-500">*</span>
