@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ActionFunctionArgs, LoaderFunctionArgs, json } from "@remix-run/node";
-import { Form, useSubmit } from "@remix-run/react";
-import { useForm } from "react-hook-form";
+import { Form } from "@remix-run/react";
+import { getValidatedFormData, useRemixForm } from "remix-hook-form";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
 import {
@@ -14,15 +14,13 @@ import {
 } from "~/components/ui/card";
 import { ShadForm } from "~/components/ui/form";
 import { FormBuilder, InputField } from "~/components/ui/form-buildler";
-import { getFormValues } from "~/lib/getFormFields";
-import { normalizeError } from "~/lib/normalizeErrors";
 import { ownerAuthenticator } from "~/services/auth.server";
 
 const loginSchema = z.object({
-  email: z.string().min(2, {
+  email: z.string().email("Please enter your email address").min(11, {
     message: "Please enter your email address.",
   }),
-  password: z.string().min(8, {
+  password: z.string().min(1, {
     message: "Please enter your password.",
   }),
 });
@@ -33,14 +31,14 @@ const loginFields: InputField[] = [
     placeholder: "johndoe@baka.com",
     label: "Email",
     type: "email",
-    required: true,
+    // required: true,
   },
   {
     name: "password",
     placeholder: "********",
     label: "Password",
     type: "password",
-    required: true,
+    // required: true,
   },
 ];
 
@@ -53,21 +51,13 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   });
 };
 export default function LoginPage() {
-  const submit = useSubmit();
-
-  const form = useForm({
+  const form = useRemixForm({
     resolver,
     defaultValues: {
       email: "",
       password: "",
     },
   });
-
-  const handleSubmit = (data: TLoginSchema) => {
-    submit(data, {
-      method: "post",
-    });
-  };
 
   return (
     <div className="h-screen w-screen grid place-items-center">
@@ -78,7 +68,7 @@ export default function LoginPage() {
         </CardHeader>
 
         <ShadForm {...form}>
-          <Form method="POST" onSubmit={form.handleSubmit(handleSubmit)}>
+          <Form method="POST">
             <CardContent className="grid grid-cols-1 gap-2">
               <FormBuilder form={form} inputFields={loginFields} />
             </CardContent>
@@ -97,24 +87,19 @@ export default function LoginPage() {
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const requestClone = request.clone();
-  const formValues = await getFormValues<TLoginSchema>(
-    await requestClone.formData()
-  );
-  const parsedData = await loginSchema.safeParseAsync({
-    email: "",
-    password: "",
-  });
 
-  // if (!parsedData.success) {
-  //   const errors = parsedData.error;
-  //   return json(errors, {
-  //     status: 401,
-  //   });
-  // }
+  const {
+    errors,
+    data,
+    receivedValues: defaultValues,
+  } = await getValidatedFormData<TLoginSchema>(requestClone, resolver);
+
+  if (errors) {
+    return json({ errors, defaultValues });
+  }
 
   await ownerAuthenticator.authenticate("owner-auth", request, {
-    // let's add `loginSuccess` search params, and read it to show login success toast :)
-    successRedirect: "/store/dashboard?loginSuccess=true",
-    failureRedirect: "/dashboard-login",
+    successRedirect: "/store/dashboard",
+    failureRedirect: "/dashboard-login?error=true",
   });
 };
