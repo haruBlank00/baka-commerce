@@ -1,6 +1,6 @@
 import { Category } from "@prisma/client";
 import { CheckCheck, Search, X } from "lucide-react";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
@@ -17,24 +17,46 @@ import {
 } from "~/components/ui/popover";
 import { cn } from "~/lib/utils";
 
+export type TSelectedCategory = {
+  id: string;
+  name: string;
+};
+const SelectedCategories = ({
+  categories,
+  setSelectedCategories,
+}: {
+  categories: TSelectedCategory[];
+  setSelectedCategories: (categories: TSelectedCategory[]) => void;
+}) => {
+  return categories.map((selectedCategory) => (
+    <Badge
+      key={selectedCategory.id}
+      variant={"secondary"}
+      className="capitalize"
+    >
+      {selectedCategory.name}
+      <X
+        className="ml-1 w-5 h-5 hover:bg-purple-300 hover:text-white rounded-full p-1"
+        size={32}
+        onClick={() =>
+          setSelectedCategories(
+            categories.filter((item) => item.id !== selectedCategory.id)
+          )
+        }
+      />
+    </Badge>
+  ));
+};
 export const CategoriesOptions = ({
   categories,
-  selectedCategories,
+  selectedCategories = [],
   setSelectedCategories,
 }: {
   categories: Category[];
-  selectedCategories: { id: string; name: string }[];
-  setSelectedCategories: Dispatch<
-    SetStateAction<
-      {
-        id: string;
-        name: string;
-      }[]
-    >
-  >;
+  selectedCategories: TSelectedCategory[];
+  setSelectedCategories: (categories: TSelectedCategory[]) => void;
 }) => {
   const [open, setOpen] = useState(false);
-
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -45,28 +67,14 @@ export const CategoriesOptions = ({
           className="w-full justify-between"
         >
           <div className="flex gap-2">
-            {selectedCategories.length > 0
-              ? selectedCategories.map((selectedCategory) => (
-                  <Badge
-                    key={selectedCategory.id}
-                    variant={"secondary"}
-                    className="capitalize"
-                  >
-                    {selectedCategory.name}
-                    <X
-                      className="ml-1 w-5 h-5 hover:bg-purple-300 hover:text-white rounded-full p-1"
-                      size={32}
-                      onClick={() =>
-                        setSelectedCategories((prev) => {
-                          return prev.filter(
-                            (item) => item.id !== selectedCategory.id
-                          );
-                        })
-                      }
-                    />
-                  </Badge>
-                ))
-              : "Select product categories..."}
+            {selectedCategories.length > 0 ? (
+              <SelectedCategories
+                categories={selectedCategories}
+                setSelectedCategories={setSelectedCategories}
+              />
+            ) : (
+              "Select product categories..."
+            )}
           </div>
           <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -96,15 +104,14 @@ export const CategoriesOptions = ({
                     );
                     return;
                   }
-                  setSelectedCategories((prev) => {
-                    return [
-                      ...prev,
-                      {
-                        name: currentValue,
-                        id: category.id,
-                      },
-                    ];
-                  });
+
+                  setSelectedCategories([
+                    ...selectedCategories,
+                    {
+                      name: currentValue,
+                      id: category.id,
+                    },
+                  ]);
                 }}
               >
                 {category.name}

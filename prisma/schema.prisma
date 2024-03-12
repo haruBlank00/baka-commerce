@@ -100,7 +100,7 @@ model Category {
 
   products ProductCategory[]
 
-  removed   Boolean   @default(false)
+  removed   Boolean?
   removedAt DateTime?
 
   createdAt DateTime @default(now())
@@ -108,6 +108,44 @@ model Category {
 }
 
 model Product {
+  id String @id @default(uuid())
+
+  name        String
+  description String
+
+  status ProductStatus
+
+  images String[]
+
+  variants Variant[]
+
+  categories ProductCategory[]
+
+  inventoryStatus InventoryStatus @default(IN_STOCK)
+
+  store   Store?  @relation(fields: [storeId], references: [id])
+  storeId String?
+
+  removed   Boolean?
+  removedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Variant {
+  id String @id @default(uuid())
+
+  type   String // color, size
+  values VariantValue[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Product   Product  @relation(fields: [productId], references: [id])
+  productId String
+}
+
+model VariantValue {
   id String @id @default(uuid())
 
   name        String
@@ -121,20 +159,12 @@ model Product {
   sku      String
 
   sellAfterOutOfStock Boolean
-  status              ProductStatus
+  inventoryStatus     InventoryStatus
 
   images String[]
 
-  // variants = [{variant: "size", values: [{value: "xs", label: "small", price: "5.00"}]}]
-  variants Json?
-
-  categories ProductCategory[]
-
-  store   Store?  @relation(fields: [storeId], references: [id])
-  storeId String?
-
-  removed   Boolean   @default(false)
-  removedAt DateTime?
+  variant   Variant @relation(fields: [variantId], references: [id])
+  variantId String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -159,6 +189,8 @@ enum ProductStatus {
   ARCHIVED
 }
 
-// id String @id @default(uuid())
-// createdAt DateTime @default(now())
-// updatedAt DateTime @updatedAt
+enum InventoryStatus {
+  IN_STOCK
+  OUT_OF_STOCK
+  DISCONTINUED
+}

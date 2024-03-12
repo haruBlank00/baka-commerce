@@ -1,9 +1,11 @@
 import { LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useNavigate } from "@remix-run/react";
 import { Button } from "~/components/ui/button";
 import { DataTable } from "~/components/ui/data-table";
 import { prisma } from "~/services/db.server";
 import { categoryColumns } from "./components/columns";
+import { Row } from "@tanstack/react-table";
+import { Product } from "@prisma/client";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const storeId = params.storeId;
@@ -18,8 +20,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return { products };
 };
 
-export default function Product() {
+export default function ProductsPage() {
   const loaderData = useLoaderData<typeof loader>();
+  const navigate = useNavigate();
+
+  const onRowClick = (row: Row<Product>) => {
+    navigate(row.original.id);
+  };
   return (
     <>
       <div>
@@ -28,13 +35,17 @@ export default function Product() {
           <Button
             size={"sm"}
             className="bg-purple-600 text-white"
-            onClick={() => {}}
+            onClick={() => navigate("new")}
           >
             Add Product
           </Button>
         </div>
 
-        <DataTable columns={categoryColumns} data={loaderData.products} />
+        <DataTable
+          columns={categoryColumns}
+          data={loaderData.products}
+          onRowClick={onRowClick}
+        />
       </div>
     </>
   );

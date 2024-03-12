@@ -6,241 +6,137 @@ import {
   unstable_createMemoryUploadHandler,
   unstable_parseMultipartFormData,
 } from "@remix-run/node";
-import { Form, useLoaderData, useSubmit } from "@remix-run/react";
-import { ImagePlus, MoveLeft, X } from "lucide-react";
-import { useRef, useState } from "react";
-import { Button } from "~/components/ui/button";
-import { Card } from "~/components/ui/card";
-import { Checkbox } from "~/components/ui/checkbox";
-import { ClientOnly } from "~/components/ui/client-only";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { TextEditor } from "~/components/ui/textEditor.client";
+import { Form, useLoaderData, useNavigate } from "@remix-run/react";
+import { Edit2Icon, ImagePlusIcon, MoveLeft } from "lucide-react";
+import { useState } from "react";
+import { useFieldArray } from "react-hook-form";
+import { useRemixForm } from "remix-hook-form";
+import { ShadForm } from "~/components/ui/form";
+import { FormBuilder } from "~/components/ui/form-buildler";
 import { getFormValues } from "~/lib/getFormFields";
-import { prisma } from "~/services/db.server";
-import { CategoriesOptions } from "./components/categories-options";
 import { uploadImage } from "~/services/cloudinary.server";
-import { ProductStatus } from "@prisma/client";
+import { prisma } from "~/services/db.server";
+import { useFormFields } from "./useFormfields";
 
+type Field = typeof leftFields & typeof rightFields;
+
+type TProductVariant = {
+  variants: { type: string; value: string }[]; // [{type: color, value: "red"}, {type: "size", value: "xl"}] = red*xl
+  sellingPrice: number;
+  crossedPrice: number;
+  costPerItem: number;
+  quantity: number;
+  sku: number;
+  sellAfterOutOfStock: boolean;
+};
+
+type TVariantField = {
+  id: string;
+  type: string;
+  variants: TProductVariant[];
+};
 export const loader = async ({ params }: LoaderFunctionArgs) => {
   const storeId = params.storeId;
   const categories = await prisma.category.findMany({
     where: {
       storeId,
+      removed: true,
     },
   });
 
   return json({ categories });
 };
+
+// const zodSchema =
 export default function CreateProduct() {
-  const imagesFieldRef = useRef<HTMLInputElement>(null);
   const loaderData = useLoaderData<typeof loader>();
-  const [images, setImages] = useState<File[]>([]);
-  const [textEditorValue, setTextEditorValue] = useState("");
-  const [seletedCategories, setSeletedCategories] = useState<
-    { id: string; name: string }[]
-  >([]);
-  const [productStatus, setProductStatus] = useState<ProductStatus>(
-    ProductStatus.DRAFT
-  );
+  const { leftFields, rightFields } = useFormFields({ loaderData });
+  const form = useRemixForm({
+    defaultValues: {
+      name: "",
+      description: "",
+      sellingPrice: null,
+      crossedPrice: null,
+      costPerItem: null,
+      sku: null,
+      quantity: null,
+      sellAfterOutOfStock: false,
+      images: [],
+      categories: [],
+      colors: "",
+      sizes: "",
 
-  const submit = useSubmit();
+      variants: { colors: [], sizes: [] }, // no input field, we need to use this to track all variants
+    },
+  });
 
-  const removeProductImage = (name: string) => {
-    setImages((prevImages) =>
-      prevImages.filter((prevImage) => prevImage.name !== name)
-    );
-  };
+  // const fieldArray = useFieldArray({
+  //   control: form.control,
+  //   name: "variants",
+  // });
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    const formData = new FormData(e.currentTarget);
-    formData.append("description", textEditorValue);
-    formData.append("categories", JSON.stringify(seletedCategories));
-    formData.append("status", productStatus);
-    for (const image of images) {
-      formData.append("images", image);
-    }
+  const navigate = useNavigate();
 
-    console.log(await getFormValues(formData));
+  const watchedVariants = form.watch("variants");
+  console.log(watchedVariants, "watched variants");
 
-    submit(formData, {
-      method: "post",
-      encType: "multipart/form-data",
-    });
-  };
+  // const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  //   const formData = new FormData(e.currentTarget);
+  //   formData.append("description", textEditorValue);
+  //   formData.append("categories", JSON.stringify(seletedCategories));
+  //   formData.append("status", productStatus);
+  //   for (const image of images) {
+  //     formData.append("images", image);
+  //   }
+
+  //   console.log(await getFormValues(formData));
+
+  //   submit(formData, {
+  //     method: "post",
+  //     encType: "multipart/form-data",
+  //   });
+  // };
 
   return (
     <>
       <div className=" flex justify-between">
         <div className="flex gap-2 items-center text-purple-500">
           <MoveLeft
-            className=" hover:bg-purple-500 hover:text-white p-2"
+            className=" hover:bg-purple-500 hover:text-white p-2 cursor-pointer"
             size={32}
+            onClick={() => navigate(-1)}
           />
           Add Product
         </div>
       </div>
 
-      <Form className="grid grid-cols-2 gap-4" onSubmit={handleSubmit}>
-        <div>
-          <Card className="rounded-sm p-3 flex flex-col gap-3 mb-4 h-72">
-            <div className="flex flex-col gap-2">
-              <Label className="">
-                Product Name <span className="text-red-500">*</span>
-              </Label>
-              <Input name="name" placeholder="eg: pants" />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label className="">
-                Product Description <span className="text-red-500">*</span>
-              </Label>
-              <ClientOnly fallback={<div>loading...</div>}>
-                {() => (
-                  <TextEditor
-                    name={"description"}
-                    theme="snow"
-                    placeholder="Enter your product description"
-                    value={textEditorValue}
-                    onChange={setTextEditorValue}
-                  />
-                )}
-              </ClientOnly>
-            </div>
-          </Card>
-
-          <Card className="rounded-sm p-3 flex flex-col gap-3 mb-4">
-            <div className="flex flex-col gap-2">
-              <Label>
-                Selling Price <span className="text-red-500">*</span>
-              </Label>
-              <Input name="sellingPrice" placeholder="1000" type="number" />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label>
-                <span className="line-through">Crossed Price</span>
-                <span className="text-red-500">*</span>
-              </Label>
-              <Input name="crossedPrice" placeholder="1000" type="number" />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label className="">Cost per item</Label>
-              <p className="text-stone-400 text-xs">
-                Customer won&apos;t see this data
-              </p>
-              <Input name="costPerItem" placeholder="1000" type="number" />
-            </div>
-          </Card>
-
-          <Card className="rounded-sm p-3 flex flex-col gap-3 mb-4">
-            <div className="flex flex-col gap-2">
-              <Label>Quantity</Label>
-              <Input name="quantity" placeholder="10" type="number" />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label>
-                <span>Product Sku</span>
-              </Label>
-              <Input name="sku" placeholder="eg: 100" />
-            </div>
-          </Card>
-
-          <div className="flex items-center space-x-2 cursor-pointer">
-            <Checkbox name="sellAfterOutOfStock" id="sellAfterOutOfStock" />
-            <Label htmlFor="sellAfterOutOfStock">
-              Continue selling even after the product is out of stock
-            </Label>
+      <ShadForm {...form}>
+        <Form className="grid grid-cols-2 gap-4">
+          <div>
+            <FormBuilder form={form} inputFields={leftFields} />
           </div>
-        </div>
-
-        <div>
-          <Card className="rounded-sm p-3 flex flex-col gap-3 mb-4">
-            <Label>Product Images</Label>
-            <Input
-              type="file"
-              id="productImage"
-              hidden={true}
-              // name="images"
-              ref={imagesFieldRef}
-              className="hidden"
-              multiple
-              accept="image/*"
-              onChange={(e) => {
-                const files = e?.target?.files;
-                if (files) {
-                  setImages((prevImages) => {
-                    return [...prevImages, ...files];
-                  });
-                }
-              }}
-            />
-            <Card
-              className={`border-2 border-dashed h-44 grid ${
-                images.length > 0 ? "" : "place-items-center"
-              } bg-white hover:bg-slate-100 rounded-sm shadow-none cursor-pointer p-2`}
-              onClick={() => imagesFieldRef.current?.click()}
-            >
-              {images?.length > 0 ? (
-                <figure className="grid grid-cols-4 gap-2">
-                  {images.map((image) => {
-                    const urlString = URL.createObjectURL(image);
-                    return (
-                      <div className="relative" key={image.name}>
-                        <X
-                          className="absolute right-1 top-1 p-1 rounded-full bg-slate-100 hover:bg-slate-200 "
-                          size={18}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeProductImage(image.name);
-                          }}
-                        />
-                        <img
-                          className="block w-full h-full object rounded-sm"
-                          src={urlString}
-                          alt="Product showcase"
-                        />
-                      </div>
-                    );
-                  })}
-                </figure>
-              ) : (
-                <ImagePlus size={72} />
-              )}
-            </Card>
-          </Card>
-
-          <Card className="rounded-sm p-3 flex flex-col gap-3 mb-4">
-            <div className="flex flex-col gap-2">
-              <Label>Categories</Label>
-              <CategoriesOptions
-                categories={loaderData.categories}
-                selectedCategories={seletedCategories}
-                setSelectedCategories={setSeletedCategories}
-              />
-            </div>
-
-            <div className="flex flex-col gap-2"></div>
-          </Card>
-
-          <div className="flex gap-2">
-            <Button
-              type="submit"
-              onClick={() => setProductStatus(ProductStatus.PUBLISH)}
-            >
-              Publish
-            </Button>
-            <Button onClick={() => setProductStatus(ProductStatus.DRAFT)}>
-              Save as draft
-            </Button>
+          <div>
+            <FormBuilder form={form} inputFields={rightFields} />
           </div>
-        </div>
-      </Form>
+        </Form>
+      </ShadForm>
     </>
   );
 }
+
+const VariantImage = () => {
+  const [hover, setHover] = useState(false);
+
+  return (
+    <figure className="h-16 w-16  rounded-sm bg-slate-200 grid place-items-center">
+      {hover ? (
+        <ImagePlusIcon onMouseEnter={() => setHover(true)} />
+      ) : (
+        <Edit2Icon />
+      )}
+    </figure>
+  );
+};
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const storeId = params.storeId;
@@ -250,10 +146,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       if (name !== "images") {
         return undefined;
       }
-      console.log({ name, data }, "name i shere");
       // return name;
       const uploadedImage = await uploadImage(data);
-      console.log(uploadedImage.secure_url);
       return uploadedImage.secure_url;
     },
     unstable_createMemoryUploadHandler()
@@ -281,7 +175,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       costPerItem,
       quantity,
       storeId,
-      
+
       categories: {
         create: categories.map((category) => ({
           category: { connect: { id: category.id } },
@@ -289,6 +183,25 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       },
     },
   });
-  console.log({ product });
   return null;
 };
+
+/*
+variants = [
+  {
+    id: "",
+    variants: [
+      {
+        variants: [{type: 'color', value: 'red'}, {type: "size", value: "xxl"}],
+        sellingPrice: number,
+        crossedPrice: number,
+        costPerItem: number,
+        quantity: number,
+        sku: number,
+        sellAfterOutOfStock: boolean
+      }
+    ]
+  },
+
+]
+*/

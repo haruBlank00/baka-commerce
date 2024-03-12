@@ -40,16 +40,11 @@ export const EditCategorySheet = ({
       formData.delete("image");
     }
 
-    console.log(
-      formData.get("name"),
-      formData.get("id"),
-      formData.get("image")
-    );
-
     submit(formData, {
       action: `/${params.storeId}/dashboard/categories/edit`,
       method: "post",
       encType: "multipart/form-data",
+      navigate: false,
     });
   };
 
@@ -67,8 +62,6 @@ export const EditCategorySheet = ({
         <Form
           className="flex flex-col gap-4 bg-white shadow-sm p-2"
           onSubmit={(e) => submitHandler(e)}
-          // method="post"
-          // encType="multipart/form-data"
           navigate={false}
         >
           <Input value={categoryId || ""} readOnly name="id" hidden />

@@ -1,4 +1,4 @@
-import { Category, Product } from "@prisma/client";
+import { Product } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import { formatDate } from "~/lib/formatDate";
 
